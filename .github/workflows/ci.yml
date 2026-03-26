@@ -62,10 +62,16 @@ jobs:
         run: git config --global --add safe.directory "${{ github.workspace }}"
 
       - name: Build backend image
-        run: docker build -t student-app-backend:${{ github.sha }} ./backend
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          docker build -t student-app-backend:${{ github.sha }} ./backend 2>&1 | Out-Default
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build frontend image
-        run: docker build -t student-app-frontend:${{ github.sha }} ./frontend
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          docker build -t student-app-frontend:${{ github.sha }} ./frontend 2>&1 | Out-Default
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify images
         run: docker images | Select-String "student-app"
@@ -84,11 +90,16 @@ jobs:
         run: git config --global --add safe.directory "${{ github.workspace }}"
 
       - name: Stop existing containers (preserve volumes)
-        run: docker-compose down 2>&1 | Out-Default
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          docker-compose down 2>&1 | Out-Default
         continue-on-error: true
 
       - name: Start services with fresh build
-        run: docker-compose up --build -d 2>&1 | Out-Default
+        run: |
+          $ErrorActionPreference = 'SilentlyContinue'
+          docker-compose up --build -d 2>&1 | Out-Default
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Wait for services to be healthy
         run: |
